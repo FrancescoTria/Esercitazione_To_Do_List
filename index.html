@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>To-Do • Bootstrap</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-primary mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <i class="bi bi-check2-circle fs-4"></i>
+                <span>To-Do</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="card shadow-sm card-polish">
+                    <div class="card-body">
+                        <div class="d-flex flex-column mb-3">
+                            <h1 class="h4 mb-1">Le tue attività</h1>
+                        </div>
+
+                        <!-- Form -->
+                        <form id="taskForm" class="row g-3 align-items-end mb-3 needs-validation" novalidate>
+                            <div class="col-12">
+                                <label for="taskInput" class="form-label">Titolo</label>
+                                <input id="taskInput" type="text" class="form-control" autocomplete="off" required>
+                                <div class="invalid-feedback">Inserisci un titolo decente.</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="startDate" class="form-label">Data inizio</label>
+                                <input id="startDate" type="date" class="form-control" required>
+                                <div class="invalid-feedback">Serve la data di inizio.</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="endDate" class="form-label">Data fine</label>
+                                <input id="endDate" type="date" class="form-control" required>
+                                <div class="invalid-feedback">La data di fine deve essere uguale o successiva alla data
+                                    di inizio.</div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex flex-column flex-md-row align-items-stretch gap-2">
+                                    <button id="addBtn" type="submit" class="btn btn-primary">
+                                        <i class="bi bi-plus-lg me-1"></i> Aggiungi
+                                    </button>
+
+                                    <!-- Spinge il filtro a destra da md in su -->
+                                    <div class="ms-md-auto"></div>
+
+                                    <button id="filterBtn" type="button" class="btn btn-outline-secondary"
+                                        data-bs-toggle="tooltip" data-bs-title="Cambia filtro">
+                                        <i class="bi bi-funnel me-1"></i>
+                                        <span class="filter-label">Mostra: Tutte</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+
+
+                        <!-- Empty state -->
+                        <div id="emptyState" class="empty-state text-center py-3">
+                            <i class="bi bi-inbox fs-1 text-secondary"></i>
+                            <p class="text-secondary mb-0">Nessun task. Goditi questo raro momento.</p>
+                        </div>
+
+                        <!-- Lista -->
+                        <ul id="taskList" class="list-group list-group-flush rounded-3 border"></ul>
+                    </div>
+
+                    <div class="card-footer bg-white d-flex justify-content-end">
+                        <div id="counter" class="d-flex gap-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS (bundle include Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
