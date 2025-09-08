@@ -80,7 +80,7 @@ body {
     }
 }
 
-/* Effetto rimozione: barrato + dissolvenza */
+/* Effetto rimozione (se usato) */
 .removing {
     pointer-events: none;
     animation: itemFadeOut .35s ease forwards;
@@ -137,31 +137,29 @@ body {
     }
 }
 
-/* Già presente, ma ribadisco: lo strike dev’essere visibile sempre */
-.task-text.completed {
-    text-decoration: line-through !important;
-    color: #6c757d;
+/* Card centrata, con larghezza più equilibrata */
+.card-polish {
+    width: 100%;
+    /* prende tutta la row */
+    max-width: 960px;
+    /* non diventa mai troppo larga */
+    margin: 0 auto;
+    /* centrata */
 }
 
-/* Effetto rimozione già usato dal delete */
-.removing {
-    pointer-events: none;
-    animation: itemFadeOut .35s ease forwards;
+/* Toolbar: tutti i bottoni restano su una riga */
+.toolbar {
+    white-space: nowrap;
 }
 
-@keyframes itemFadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0)
-    }
-
-    to {
-        opacity: 0;
-        transform: translateY(-6px)
-    }
+.toolbar>*:not(input) {
+    flex-shrink: 0;
+    /* i bottoni non si comprimono mai */
 }
 
-#addBtn,
-#filterBtn {
-    min-height: 42px;
+.toolbar input {
+    flex: 1 1 auto;
+    /* solo la search si adatta allo spazio */
+    min-width: 120px;
+    /* mai troppo piccola */
 }

@@ -1,9 +1,12 @@
+// main.js
+import { useMap, useList, getManager } from './controllo.js';
+
 // =======================
-// Stato applicazione
+// Stato UI (filtri, ricerca, ordinamento)
 // =======================
-let tasks = [];
-let nextId = 1;
-let currentFilter = 'all'; // 'all' | 'todo' | 'done'
+let currentFilter = 'all';   // 'all' | 'todo' | 'done'
+let currentSort = 'desc';    // 'desc' | 'asc'
+let searchQuery = '';
 
 // =======================
 // Riferimenti DOM
@@ -15,13 +18,16 @@ const endDate = document.getElementById('endDate');
 const list = document.getElementById('taskList');
 const counter = document.getElementById('counter');
 const emptyState = document.getElementById('emptyState');
-const filterBtn = document.getElementById('filterBtn');
 
-// =======================
-// Avvio
-// =======================
-refreshList();
-updateFilterBtnUI();
+const filterBtn = document.getElementById('filterBtn');
+const sortBtn = document.getElementById('sortBtn');
+const searchInput = document.getElementById('searchInput');
+
+const markAllBtn = document.getElementById('markAllBtn');
+const removeCompletedBtn = document.getElementById('removeCompletedBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+
+const modeSwitch = document.getElementById('modeSwitch');
 
 // =======================
 // Utils
@@ -48,14 +54,8 @@ function refreshTooltip(el) {
     if (inst) inst.dispose();
     new bootstrap.Tooltip(el);
 }
-function visibleTasks() {
-    if (currentFilter === 'todo') return tasks.filter(t => !t.completed);
-    if (currentFilter === 'done') return tasks.filter(t => t.completed);
-    return tasks.slice();
-}
 function updateFilterBtnUI() {
     if (!filterBtn) return;
-    const label = filterBtn.querySelector('.filter-label');
     if (currentFilter === 'all') {
         filterBtn.className = 'btn btn-outline-secondary';
         filterBtn.innerHTML = '<i class="bi bi-funnel me-1"></i><span class="filter-label">Mostra: Tutte</span>';
@@ -68,37 +68,30 @@ function updateFilterBtnUI() {
     }
     refreshTooltip(filterBtn);
 }
+function updateSortBtnUI() {
+    if (!sortBtn) return;
+    if (currentSort === 'desc') {
+        sortBtn.className = 'btn btn-outline-secondary';
+        sortBtn.innerHTML = '<i class="bi bi-sort-down me-1"></i><span class="sort-label">Ordina: Nuove → Vecchie</span>';
+        sortBtn.setAttribute('data-bs-title', 'Ordina per data: più recenti prima');
+    } else {
+        sortBtn.className = 'btn btn-outline-secondary';
+        sortBtn.innerHTML = '<i class="bi bi-sort-up me-1"></i><span class="sort-label">Ordina: Vecchie → Nuove</span>';
+        sortBtn.setAttribute('data-bs-title', 'Ordina per data: più vecchie prima');
+    }
+    refreshTooltip(sortBtn);
+}
 function cycleFilter() {
     currentFilter = currentFilter === 'all' ? 'todo'
         : currentFilter === 'todo' ? 'done'
             : 'all';
     updateFilterBtnUI();
-    refreshList();
+    render();
 }
-
-// Aggiorna la UI di un singolo <li> in base allo stato completato
-function applyCompletedUI(li, isCompleted) {
-    const text = li.querySelector('.task-text');
-    const completeBtn = li.querySelector('.complete-btn');
-    const badges = li.querySelectorAll('.task-meta .badge');
-
-    if (text) text.classList.toggle('completed', isCompleted);
-    li.classList.toggle('completed-item', isCompleted);
-    badges.forEach(b => b.classList.toggle('badge-done', isCompleted));
-
-    if (completeBtn) {
-        completeBtn.innerHTML = isCompleted
-            ? '<i class="bi bi-check2-circle"></i>'
-            : '<i class="bi bi-check2"></i>';
-        completeBtn.className = isCompleted
-            ? 'btn btn-success complete-btn'
-            : 'btn btn-outline-secondary complete-btn';
-        completeBtn.setAttribute('data-bs-title', isCompleted ? 'Segna come incompleto' : 'Segna come completato');
-        refreshTooltip(completeBtn);
-    }
-
-    li.classList.add('completed-pop');
-    setTimeout(() => li.classList.remove('completed-pop'), 220);
+function cycleSort() {
+    currentSort = currentSort === 'desc' ? 'asc' : 'desc';
+    updateSortBtnUI();
+    render();
 }
 
 // =======================
@@ -126,94 +119,103 @@ form.addEventListener('submit', (e) => {
     }
     if (!valid) return;
 
-    const task = { id: nextId++, text, start, end, completed: false };
-    tasks.push(task);
+    getManager().addTask(text, start, end);
 
-    refreshList();
     form.reset();
     input.focus();
+    render();
 });
 
-filterBtn?.addEventListener('click', () => {
-    cycleFilter();
+filterBtn?.addEventListener('click', cycleFilter);
+sortBtn?.addEventListener('click', cycleSort);
+
+searchInput?.addEventListener('input', () => {
+    searchQuery = searchInput.value;
+    render();
 });
 
+markAllBtn?.addEventListener('click', () => { getManager().markAll(); render(); });
+removeCompletedBtn?.addEventListener('click', () => { getManager().removeCompleted(); render(); });
+clearAllBtn?.addEventListener('click', () => { getManager().clearAll(); render(); });
+
+// Event delegation su lista
 list.addEventListener('click', (e) => {
-    // Completa / Incompleta
     const completeBtn = e.target.closest('.complete-btn');
     if (completeBtn) {
-        e.preventDefault();
-        e.stopPropagation();
         const li = completeBtn.closest('li');
-        const id = Number(li?.dataset?.id);
-        if (!id) return;
-
-        const t = tasks.find(x => x.id === id);
-        if (!t) return;
-
-        t.completed = !t.completed;
-
-        // Se l'elemento non appartiene più al filtro corrente, fade-out e poi refresh
-        const willDisappear = (currentFilter === 'todo' && t.completed) ||
-            (currentFilter === 'done' && !t.completed);
-        if (willDisappear) {
-            li.classList.add('removing');
-            li.addEventListener('animationend', () => refreshList(), { once: true });
-        } else {
-            applyCompletedUI(li, t.completed);
-            updateCounter();
-        }
+        const id = li?.dataset?.id;
+        if (id) getManager().toggleDone(id);
+        render();
         return;
     }
-
-    // Elimina
     const deleteBtn = e.target.closest('.delete-btn');
     if (deleteBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-
         const li = deleteBtn.closest('li');
-        const id = Number(li?.dataset?.id);
-        if (!id) return;
-
-        const span = li.querySelector('.task-text');
-        if (span) {
-            span.classList.add('completed');
-            span.style.textDecoration = 'line-through';
-            span.style.color = '#6c757d';
-        }
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    void li.offsetWidth;
-                    li.classList.add('removing');
-                }, 220);
-            });
-        });
-
-        let removed = false;
-        const reallyRemove = () => {
-            if (removed) return;
-            removed = true;
-            tasks = tasks.filter(t => t.id !== id);
-            refreshList();
-        };
-        li.addEventListener('animationend', (ev) => {
-            if (ev.animationName === 'itemFadeOut') reallyRemove();
-        }, { once: true });
-        setTimeout(reallyRemove, 900);
+        const id = li?.dataset?.id;
+        if (id) getManager().removeTask(id);
+        render();
     }
 });
+
+// Switch Lista/Mappa
+modeSwitch?.addEventListener('change', () => {
+    const label = document.querySelector('.mode-label');
+    const icon = modeSwitch.nextElementSibling.querySelector('i');
+
+    if (modeSwitch.checked) {
+        useMap();
+        label.textContent = "Mappa";
+        icon.className = "bi bi-diagram-3";
+    } else {
+        useList();
+        label.textContent = "Lista";
+        icon.className = "bi bi-list-ul";
+    }
+    render();
+});
+
+
 
 // =======================
 // Rendering
 // =======================
-function refreshList() {
+function render() {
     list.innerHTML = '';
-    visibleTasks().forEach(renderItem);
-    updateCounter();
-    toggleEmptyState();
+
+    const q = searchQuery.trim().toLowerCase();
+    let items = [];
+    for (const t of getManager().getAll()) {
+        const matchFilter = currentFilter === 'all'
+            ? true
+            : currentFilter === 'todo' ? !t.completed : t.completed;
+        const matchSearch = !q || t.text.toLowerCase().includes(q);
+        if (matchFilter && matchSearch) items.push(t);
+    }
+
+    items.sort((a, b) => {
+        const sa = a.start || '';
+        const sb = b.start || '';
+        if (sa !== sb) return currentSort === 'desc' ? sb.localeCompare(sa) : sa.localeCompare(sb);
+        return currentSort === 'desc' ? Number(b.id) - Number(a.id) : Number(a.id) - Number(b.id);
+    });
+
+    for (const task of items) {
+        renderItem(task);
+    }
+
+    const allTasks = getManager().getAll();
+    let tot = allTasks.length;
+    let done = allTasks.filter(t => t.completed).length;
+
+    counter.innerHTML = tot
+        ? `<span class="badge text-bg-primary"><i class="bi bi-check2 me-1"></i>${done} completati</span>
+           <span class="badge text-bg-secondary"><i class="bi bi-list-ul me-1"></i>${tot} totali</span>`
+        : `<span class="badge text-bg-light text-secondary">Vuoto</span>`;
+
+    emptyState.style.display = items.length ? 'none' : 'block';
+
+    refreshTooltip(filterBtn);
+    refreshTooltip(sortBtn);
 }
 
 function renderItem(task) {
@@ -221,7 +223,6 @@ function renderItem(task) {
     li.className = 'list-group-item';
     li.dataset.id = task.id;
 
-    // Colonna sinistra: titolo + meta date
     const left = document.createElement('div');
     left.style.display = 'flex';
     left.style.flexDirection = 'column';
@@ -242,18 +243,16 @@ function renderItem(task) {
     const meta = document.createElement('div');
     meta.className = 'task-meta';
     meta.innerHTML = `
-    <span class="badge text-bg-light border"><i class="bi bi-play-fill me-1"></i>Inizio: ${formatDate(task.start)}</span>
-    <span class="badge text-bg-light border"><i class="bi bi-flag me-1"></i>Fine: ${formatDate(task.end)}</span>
-  `;
+        <span class="badge text-bg-light border"><i class="bi bi-play-fill me-1"></i>Inizio: ${formatDate(task.start)}</span>
+        <span class="badge text-bg-light border"><i class="bi bi-flag me-1"></i>Fine: ${formatDate(task.end)}</span>
+    `;
 
     left.appendChild(titleRow);
     left.appendChild(meta);
 
-    // Spacer
     const spacer = document.createElement('div');
     spacer.className = 'flex-grow-1';
 
-    // Bottone COMPLETA
     const completeBtn = document.createElement('button');
     completeBtn.type = 'button';
     completeBtn.className = task.completed ? 'btn btn-success complete-btn' : 'btn btn-outline-secondary complete-btn';
@@ -262,7 +261,6 @@ function renderItem(task) {
     completeBtn.setAttribute('data-bs-title', task.completed ? 'Segna come incompleto' : 'Segna come completato');
     completeBtn.innerHTML = task.completed ? '<i class="bi bi-check2-circle"></i>' : '<i class="bi bi-check2"></i>';
 
-    // Bottone ELIMINA
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.className = 'btn btn-light delete-btn';
@@ -271,7 +269,6 @@ function renderItem(task) {
     delBtn.setAttribute('data-bs-title', 'Elimina');
     delBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
 
-    // Layout riga
     li.style.display = 'flex';
     li.style.alignItems = 'center';
     li.style.gap = '.5rem';
@@ -281,31 +278,20 @@ function renderItem(task) {
     li.appendChild(completeBtn);
     li.appendChild(delBtn);
 
-    // Stato iniziale se già completato
     if (task.completed) {
         li.classList.add('completed-item');
         meta.querySelectorAll('.badge').forEach(b => b.classList.add('badge-done'));
     }
 
-    list.prepend(li);
+    list.appendChild(li);
 
-    // Tooltips
     initTooltip(completeBtn);
     initTooltip(delBtn);
 }
 
 // =======================
-// UI helpers
+// Avvio
 // =======================
-function updateCounter() {
-    const tot = tasks.length;
-    const done = tasks.filter(t => t.completed).length;
-
-    counter.innerHTML = tot
-        ? `<span class="badge text-bg-primary"><i class="bi bi-check2 me-1"></i>${done} completati</span>
-       <span class="badge text-bg-secondary"><i class="bi bi-list-ul me-1"></i>${tot} totali</span>`
-        : `<span class="badge text-bg-light text-secondary">Vuoto</span>`;
-}
-function toggleEmptyState() {
-    emptyState.style.display = visibleTasks().length ? 'none' : 'block';
-}
+updateFilterBtnUI();
+updateSortBtnUI();
+render();
