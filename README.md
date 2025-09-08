@@ -1,15 +1,45 @@
-# Esercitazione To-Do List — HTML/CSS/JS (Bootstrap)
+# 📝 To-Do List — HTML/CSS/JS (Bootstrap)
 
-Applicazione to-do list in **vanilla JavaScript** con **Bootstrap 5** e **Bootstrap Icons**.  
-Consente di creare attività con **titolo**, **data inizio** e **data fine**, segnarle come **completate**, **filtrarle** e **eliminarle** con animazioni leggere.
+Applicazione **To-Do List** sviluppata in vanilla JavaScript con **Bootstrap 5** e **Bootstrap Icons**.  
+Permette di gestire attività con titolo e date, segnarle come completate, ordinarle, filtrare e cancellarle con interfaccia semplice e animazioni leggere.
 
 ---
 
-## Caratteristiche
+## 🚀 Funzionalità principali
 
-- Aggiunta task con validazione: titolo, data inizio, data fine (fine ≥ inizio).
-- Pulsante **Completa** per alternare lo stato completato/incompleto.
-- Pulsante **Elimina** con effetto: barratura breve → fade-out → rimozione.
-- **Filtro ciclico** “Mostra”: Tutte → Non completate → Completate.
-- Layout responsive con **Bootstrap 5**.
-- Nessuna build o dipendenza lato tooling: file statici.
+- ➕ **Aggiunta task** con titolo, data inizio e data fine (validate: `fine ≥ inizio`)
+- ✅ **Completa/Incompleta**: toggle con un click
+- ❌ **Elimina**: effetto barratura → fade-out → rimozione
+- 🔍 **Ricerca live** nei titoli
+- 🔄 **Filtro ciclico**: Tutte → Non completate → Completate
+- 📅 **Ordinamento**: Nuove → Vecchie o viceversa
+- ⚡ **Azioni bulk**: segna tutte completate, rimuovi completate, svuota tutto
+- 🔀 **Switch Lista/Mappa**: scegli la struttura dati (Array o Map)
+- 📱 **Layout responsive** grazie a Bootstrap
+- 🎨 **Stile personalizzato** con sfondo, card centrata e animazioni CSS
+
+---
+
+## 📂 Struttura progetto
+
+```
+├── index.html    → markup principale con form, toolbar e lista
+├── style.css     → personalizzazioni grafiche e animazioni
+├── main.js       → logica UI: eventi, rendering e gestione filtri/ordinamenti
+├── controllo.js  → gestore centrale che permette di usare lista o mappa
+├── lista.js      → implementazione con Array
+└── mappa.js      → implementazione con Map
+```
+
+---
+
+## ▶️ Come avviare
+
+Clona la repository ed entra nella cartella del progetto:
+
+```bash
+git clone https://github.com/tuo-username/tua-repo.git
+cd tua-repo
+```
+
+Apri `index.html` nel browser e inizia a usare la To-Do List 🚀
