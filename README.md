@@ -37,9 +37,8 @@ Permette di gestire attività con titolo e date, segnarle come completate, ordin
 
 Clona la repository ed entra nella cartella del progetto:
 
-```bash
-git clone https://github.com/tuo-username/tua-repo.git
-cd tua-repo
+```
+git clone https://github.com/FrancescoTria/Esercitazione_To_Do_List.git
 ```
 
 Apri `index.html` nel browser e inizia a usare la To-Do List 🚀
