@@ -2,6 +2,38 @@
 import { useMap, useList, getManager } from './controllo.js';
 
 // =======================
+// Tooltips robusti (PRIMA di tutto)
+// =======================
+// Delega su <body> così funziona anche per elementi creati dinamicamente
+const tooltipDelegate = window.bootstrap?.Tooltip
+    ? new bootstrap.Tooltip(document.body, {
+        selector: '[data-bs-toggle="tooltip"]',
+        trigger: 'hover focus',
+        container: 'body',
+        boundary: 'window'
+    })
+    : null;
+
+// Nasconde e smonta il tooltip associato a un elemento
+function hideTooltipFor(el) {
+    if (!window.bootstrap?.Tooltip || !el) return;
+    const inst = bootstrap.Tooltip.getInstance(el);
+    if (inst) {
+        inst.hide();
+        el.addEventListener('hidden.bs.tooltip', () => inst.dispose(), { once: true });
+    }
+    el.blur(); // togli focus per evitare riaperture
+}
+
+// Prima di qualsiasi click (anche se l'elemento sparisce) chiudi e pulisci
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.complete-btn, .delete-btn, [data-bs-toggle="tooltip"]');
+    if (btn) hideTooltipFor(btn);
+    // Cintura e bretelle: se resta un tooltip visibile, rimuovilo
+    document.querySelectorAll('.tooltip.show').forEach(n => n.remove());
+}, true);
+
+// =======================
 // Stato UI (filtri, ricerca, ordinamento)
 // =======================
 let currentFilter = 'all';   // 'all' | 'todo' | 'done'
@@ -45,15 +77,20 @@ function markInvalid(el, message) {
     const fb = el.nextElementSibling;
     if (fb && fb.classList.contains('invalid-feedback') && message) fb.textContent = message;
 }
-function initTooltip(el) {
-    if (window.bootstrap?.Tooltip) new bootstrap.Tooltip(el);
-}
+
+// Con delega attiva non creiamo istanze manuali
+function initTooltip(_el) { /* noop: gestiti dal delegato su <body> */ }
+
+// Aggiorna il contenuto del tooltip se esiste già un'istanza
 function refreshTooltip(el) {
-    if (!window.bootstrap?.Tooltip) return;
+    if (!window.bootstrap?.Tooltip || !el) return;
     const inst = bootstrap.Tooltip.getInstance(el);
-    if (inst) inst.dispose();
-    new bootstrap.Tooltip(el);
+    const title = el.getAttribute('data-bs-title') || el.getAttribute('title') || '';
+    if (inst && typeof inst.setContent === 'function') {
+        inst.setContent({ '.tooltip-inner': title });
+    }
 }
+
 function updateFilterBtnUI() {
     if (!filterBtn) return;
     if (currentFilter === 'all') {
@@ -142,6 +179,8 @@ clearAllBtn?.addEventListener('click', () => { getManager().clearAll(); render()
 list.addEventListener('click', (e) => {
     const completeBtn = e.target.closest('.complete-btn');
     if (completeBtn) {
+        // chiudi subito l'eventuale tooltip
+        hideTooltipFor(completeBtn);
         const li = completeBtn.closest('li');
         const id = li?.dataset?.id;
         if (id) getManager().toggleDone(id);
@@ -150,6 +189,7 @@ list.addEventListener('click', (e) => {
     }
     const deleteBtn = e.target.closest('.delete-btn');
     if (deleteBtn) {
+        hideTooltipFor(deleteBtn);
         const li = deleteBtn.closest('li');
         const id = li?.dataset?.id;
         if (id) getManager().removeTask(id);
@@ -174,7 +214,11 @@ modeSwitch?.addEventListener('change', () => {
     render();
 });
 
+const loadFakeBtn = document.getElementById('loadFakeBtn');
 
+loadFakeBtn?.addEventListener('click', () => {
+    promises();
+});
 
 // =======================
 // Rendering
@@ -285,8 +329,27 @@ function renderItem(task) {
 
     list.appendChild(li);
 
+    // Non serve più istanziare manualmente: delega su <body>
     initTooltip(completeBtn);
     initTooltip(delBtn);
+}
+
+export async function promises() {
+    try {
+        const res = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=2');
+        if (!res.ok) throw new Error("Errore nella fetch: " + res.status);
+        const todos = await res.json();
+
+        todos.forEach(todo => {
+            const fakeStart = new Date().toISOString().split('T')[0];
+            const fakeEnd = fakeStart;
+            getManager().addTask(todo.title, fakeStart, fakeEnd);
+        });
+
+        render();
+    } catch (err) {
+        console.error("Errore promises():", err);
+    }
 }
 
 // =======================
@@ -295,3 +358,4 @@ function renderItem(task) {
 updateFilterBtnUI();
 updateSortBtnUI();
 render();
+promises();

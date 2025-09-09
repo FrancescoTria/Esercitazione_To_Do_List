@@ -1,20 +1,111 @@
-/* Sfondo discreto */
-body {
-    background:
-        radial-gradient(1100px 500px at 10% -10%, rgba(13, 110, 253, .08), transparent),
-        radial-gradient(900px 500px at 110% 0%, rgba(32, 201, 151, .07), transparent);
+/* ===========================
+   To-Do • UI Styles (Bootstrap 5)
+   Update: background full-screen + toolbar responsive (wrap su finestra stretta)
+   =========================== */
+
+/* ---------- Sfondo full-screen che non si tronca ---------- */
+html {
+    background-color: #f7fbff;
 }
 
-/* Card */
+body {
+    position: relative;
+    min-height: 100dvh;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(1200px 520px at 10% -10%, rgba(13, 110, 253, .08), transparent 70%),
+        radial-gradient(1000px 520px at 110% 0%, rgba(32, 201, 151, .07), transparent 70%),
+        linear-gradient(180deg, #f7fbff 0%, #f7fbff 100%);
+    background-repeat: no-repeat;
+}
+
+/* ---------- Card ---------- */
+.card-polish {
+    width: 100%;
+    max-width: 1140px;
+    /* come richiesto da te */
+    margin: 0 auto;
+}
+
 .card-polish .card-body {
-    padding-bottom: 0.75rem;
+    padding-bottom: .75rem;
 }
 
 .card-polish .card-footer {
     border-top: 0;
 }
 
-/* Lista */
+/* ---------- Toolbar (desktop): una riga, spazio distribuito, no overflow ---------- */
+.toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+    /* desktop: resta su una riga */
+    align-items: center;
+    justify-content: space-between;
+    /* spalma il vuoto tra i controlli */
+    gap: .5rem;
+    white-space: nowrap;
+    /* niente ritorni dentro le etichette */
+    min-width: 0;
+    /* consente ai figli di rimpicciolirsi */
+}
+
+.toolbar>* {
+    flex: 0 1 auto;
+    /* possono restringersi quando serve */
+    min-width: 0;
+}
+
+/* Bottoni toolbar leggermente compatti per guadagnare spazio */
+.toolbar .btn {
+    --bs-btn-padding-x: .6rem;
+}
+
+/* ---------- Searchbar: corta, flessibile, non sfonda (desktop) ---------- */
+#searchInput {
+    box-sizing: border-box;
+    width: auto !important;
+    flex: 1 1 clamp(140px, 18vw, 210px) !important;
+    min-width: 140px !important;
+    max-width: 210px !important;
+}
+
+/* ---------- Toolbar responsive: sotto lg si permette il wrap ---------- */
+/* Non cambia nulla nel layout base; si attiva solo con finestra stretta */
+@media (max-width: 992px) {
+    .toolbar {
+        flex-wrap: wrap;
+        /* ora può andare a capo */
+        justify-content: flex-start;
+        /* no “buco” a destra sulle righe */
+        row-gap: .5rem;
+        /* spazi verticali gradevoli */
+    }
+
+    .toolbar .btn {
+        --bs-btn-padding-x: .55rem;
+    }
+
+    #searchInput {
+        /* leggermente più contenuta quando lo spazio è poco */
+        flex-basis: clamp(130px, 40vw, 190px) !important;
+        max-width: 190px !important;
+    }
+}
+
+/* ---------- Lista task ---------- */
+#taskList {
+    border-radius: .75rem !important;
+}
+
 #taskList .list-group-item {
     display: flex;
     align-items: center;
@@ -33,6 +124,7 @@ body {
 .task-text {
     flex: 1;
     font-size: 1.02rem;
+    min-width: 0;
 }
 
 .task-text.completed {
@@ -51,15 +143,34 @@ body {
     font-weight: 500;
 }
 
-/* Bottone elimina */
+/* Bottoni item compatti */
 .delete-btn.btn {
     --bs-btn-padding-y: .3rem;
     --bs-btn-padding-x: .45rem;
     --bs-btn-border-radius: 50rem;
 }
 
-.delete-btn i {
-    vertical-align: -1px;
+.complete-btn.btn {
+    --bs-btn-padding-y: .3rem;
+    --bs-btn-padding-x: .5rem;
+    --bs-btn-border-radius: 50rem;
+}
+
+.delete-btn i,
+.btn i {
+    vertical-align: -2px;
+}
+
+/* Stato completato: accento verde + barra sinistra */
+.completed-item {
+    background: rgba(25, 135, 84, .06);
+    box-shadow: inset 3px 0 0 #198754;
+}
+
+.badge-done {
+    background: rgba(25, 135, 84, .12) !important;
+    color: #198754 !important;
+    border-color: rgba(25, 135, 84, .35) !important;
 }
 
 /* Empty state */
@@ -67,7 +178,7 @@ body {
     opacity: .9;
 }
 
-/* Animazioni */
+/* ---------- Animazioni ---------- */
 @keyframes fadeSlideIn {
     from {
         opacity: 0;
@@ -80,7 +191,6 @@ body {
     }
 }
 
-/* Effetto rimozione (se usato) */
 .removing {
     pointer-events: none;
     animation: itemFadeOut .35s ease forwards;
@@ -96,70 +206,4 @@ body {
         opacity: 0;
         transform: translateY(-6px);
     }
-}
-
-/* Bottone completa: stile compatto */
-.complete-btn.btn {
-    --bs-btn-padding-y: .3rem;
-    --bs-btn-padding-x: .5rem;
-    --bs-btn-border-radius: 50rem;
-}
-
-/* Stato completato: leggero accento verde e barra a sinistra */
-.completed-item {
-    background: rgba(25, 135, 84, 0.06);
-    box-shadow: inset 3px 0 0 #198754;
-}
-
-/* Badge date quando completato */
-.badge-done {
-    background: rgba(25, 135, 84, 0.12) !important;
-    color: #198754 !important;
-    border-color: rgba(25, 135, 84, 0.35) !important;
-}
-
-/* Mini feedback quando marchi come completato */
-.completed-pop {
-    animation: completedPop .18s ease-out;
-}
-
-@keyframes completedPop {
-    from {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.02);
-    }
-
-    to {
-        transform: scale(1);
-    }
-}
-
-/* Card centrata, con larghezza più equilibrata */
-.card-polish {
-    width: 100%;
-    /* prende tutta la row */
-    max-width: 960px;
-    /* non diventa mai troppo larga */
-    margin: 0 auto;
-    /* centrata */
-}
-
-/* Toolbar: tutti i bottoni restano su una riga */
-.toolbar {
-    white-space: nowrap;
-}
-
-.toolbar>*:not(input) {
-    flex-shrink: 0;
-    /* i bottoni non si comprimono mai */
-}
-
-.toolbar input {
-    flex: 1 1 auto;
-    /* solo la search si adatta allo spazio */
-    min-width: 120px;
-    /* mai troppo piccola */
 }
