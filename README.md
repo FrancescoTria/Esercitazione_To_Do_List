@@ -33,9 +33,11 @@ Gestisce attività con titolo e date, completamento rapido, filtri, ordinamenti,
 
 ## 📂 Struttura progetto
 
+```
 ├── index.html → markup con navbar, form, toolbar, lista
 ├── style.css → sfondo full-screen, toolbar responsive, animazioni
 ├── main.js → logica UI: eventi, rendering, filtri, sort, demo fetch
 ├── controllo.js → gestore centrale: switch tra lista o mappa
 ├── lista.js → implementazione con Array
 └── mappa.js → implementazione con Map
+```
